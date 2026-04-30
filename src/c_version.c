@@ -17,11 +17,11 @@ int compare(const void *a, const void *b) {
     return (fa->created > fb->created) - (fa->created < fb->created);
 }
 
-int main() {
-    DIR *dir = opendir(".");
+void process_directory(const char *dirname) {
+    DIR *dir = opendir(dirname);
     if (!dir) {
-        perror("opendir");
-        return 1;
+        perror(dirname);
+        return;
     }
 
     struct dirent *entry;
@@ -32,15 +32,18 @@ int main() {
     if (!files) {
         perror("malloc");
         closedir(dir);
-        return 1;
+        return;
     }
 
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_REG) continue;
-        if (entry->d_name[0] == '.') continue; // Hidden files will be ignored, remove this line if u want to rename hidden files as well
+        if (entry->d_name[0] == '.') continue;
+
+        char fullpath[PATH_MAX];
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", dirname, entry->d_name);
 
         struct stat sb;
-        if (stat(entry->d_name, &sb) == -1) continue;
+        if (stat(fullpath, &sb) == -1) continue;
 
         if (count >= capacity) {
             capacity *= 2;
@@ -48,12 +51,12 @@ int main() {
             if (!files) {
                 perror("realloc");
                 closedir(dir);
-                return 1;
+                return;
             }
         }
 
-        strncpy(files[count].path, entry->d_name, PATH_MAX);
-        files[count].created = sb.st_birthtimespec.tv_sec;
+        strncpy(files[count].path, fullpath, PATH_MAX);
+        files[count].created = sb.st_mtime; // portable (creation time isn't reliable on Linux)
         count++;
     }
 
@@ -62,16 +65,29 @@ int main() {
 
     for (int i = 0; i < count; i++) {
         char *ext = strrchr(files[i].path, '.');
+
         char newname[PATH_MAX];
         if (ext)
-            snprintf(newname, sizeof(newname), "%d%s", i + 1, ext);
+            snprintf(newname, sizeof(newname), "%s/%d%s", dirname, i + 1, ext);
         else
-            snprintf(newname, sizeof(newname), "%d", i + 1);
+            snprintf(newname, sizeof(newname), "%s/%d", dirname, i + 1);
 
         if (strcmp(files[i].path, newname) != 0)
             rename(files[i].path, newname);
     }
 
     free(files);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <folder1> <folder2> ...\n", argv[0]);
+        return 1;
+    }
+
+    for (int i = 1; i < argc; i++) {
+        process_directory(argv[i]);
+    }
+
     return 0;
 }
