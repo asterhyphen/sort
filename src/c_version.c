@@ -18,9 +18,11 @@ int compare(const void *a, const void *b) {
 }
 
 void process_directory(const char *dirname) {
+    printf("\n[INFO] Processing: %s\n", dirname);
+
     DIR *dir = opendir(dirname);
     if (!dir) {
-        perror(dirname);
+        perror("[ERROR] opendir failed");
         return;
     }
 
@@ -30,7 +32,7 @@ void process_directory(const char *dirname) {
 
     files = malloc(capacity * sizeof(FileEntry));
     if (!files) {
-        perror("malloc");
+        perror("[ERROR] malloc failed");
         closedir(dir);
         return;
     }
@@ -43,26 +45,39 @@ void process_directory(const char *dirname) {
         snprintf(fullpath, sizeof(fullpath), "%s/%s", dirname, entry->d_name);
 
         struct stat sb;
-        if (stat(fullpath, &sb) == -1) continue;
+        if (stat(fullpath, &sb) == -1) {
+            perror("[WARN] stat failed");
+            continue;
+        }
 
         if (count >= capacity) {
             capacity *= 2;
-            files = realloc(files, capacity * sizeof(FileEntry));
-            if (!files) {
-                perror("realloc");
+            FileEntry *tmp = realloc(files, capacity * sizeof(FileEntry));
+            if (!tmp) {
+                perror("[ERROR] realloc failed");
+                free(files);
                 closedir(dir);
                 return;
             }
+            files = tmp;
         }
 
         strncpy(files[count].path, fullpath, PATH_MAX);
-        files[count].created = sb.st_mtime; // portable (creation time isn't reliable on Linux)
+        files[count].created = sb.st_mtime;
         count++;
     }
 
     closedir(dir);
+
+    if (count == 0) {
+        printf("[INFO] No files found in %s\n", dirname);
+        free(files);
+        return;
+    }
+
     qsort(files, count, sizeof(FileEntry), compare);
 
+    int renamed = 0;
     for (int i = 0; i < count; i++) {
         char *ext = strrchr(files[i].path, '.');
 
@@ -72,16 +87,24 @@ void process_directory(const char *dirname) {
         else
             snprintf(newname, sizeof(newname), "%s/%d", dirname, i + 1);
 
-        if (strcmp(files[i].path, newname) != 0)
-            rename(files[i].path, newname);
+        if (strcmp(files[i].path, newname) != 0) {
+            if (rename(files[i].path, newname) == 0) {
+                printf("[OK] %s -> %s\n", files[i].path, newname);
+                renamed++;
+            } else {
+                perror("[ERROR] rename failed");
+            }
+        }
     }
+
+    printf("[DONE] %d/%d files renamed in %s\n", renamed, count, dirname);
 
     free(files);
 }
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Usage: %s <folder1> <folder2> ...\n", argv[0]);
+        printf("[USAGE] %s <folder1> <folder2> ...\n", argv[0]);
         return 1;
     }
 
@@ -89,5 +112,6 @@ int main(int argc, char *argv[]) {
         process_directory(argv[i]);
     }
 
+    printf("\nAll donee!.\n");
     return 0;
 }
