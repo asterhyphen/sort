@@ -5,20 +5,24 @@ A simple program to rename your files numerically on your computer based on ` da
 ## Syntax
 ### C
 ```bash
-./<output_file> '<folderpath_1>' '<folderpath_2>' '<folderpath_n>'
-# Do not use <> in your actual command, they indicate replacement to be done to the command
+gcc c_version.c
+./a.out '<folderpath_1>' '<folderpath_2>' '<folderpath_n>'
 ```
 
 ### Python
 ```bash
-python3 <filename>.py <foldepath_1> <folderpath_2> <folder_n>
-# Do not use <> in your actual command, they indicate replacement to be done to the command
+python3 python_version.py <folderpath_1> <folderpath_2> <folderpath_n>
 ```
 
 ### Rust
 ```bash
-# Do not use <> in your actual command, they indicate replacement to be done to the command
+rustc rust_version.rs
+./rust_version.rs <folderpath_1> <folderpath_2> <folderpath_n>
+
+or
+cargo run -- <folderpath_1> <folderpath_2> <folderpath_n>
 ```
+> Do not use <> in your actual command, they indicate replacement to be done to the command
 
 ## Navigate to src files
 - *[Rust](src/rust_version.rs)*
