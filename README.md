@@ -2,11 +2,22 @@
 A simple program to rename your files numerically on your computer based on ` date_creation `.
 - To run it, just save the files of your language of choice to the folder where you want the files to be renamed, and run! (compile if required)
 
-# Syntax
-## C
-```c
+## Syntax
+### C
+```bash
 ./<output_file> '<folderpath_1>' '<folderpath_2>' '<folderpath_n>'
-Do not use <> in your actual command, they indicate replacement to be done to the command
+# Do not use <> in your actual command, they indicate replacement to be done to the command
+```
+
+### Python
+```bash
+python3 <filename>.py <foldepath_1> <folderpath_2> <folder_n>
+# Do not use <> in your actual command, they indicate replacement to be done to the command
+```
+
+### Rust
+```bash
+# Do not use <> in your actual command, they indicate replacement to be done to the command
 ```
 
 ## Navigate to src files
